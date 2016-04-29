@@ -88,7 +88,7 @@ model.compile(loss='categorical_crossentropy', optimizer="sgd", metrics=['accura
 
 model.fit(X_train, y_train,
           nb_epoch=args.iters,
-          batch_size=100, validation_data=(X_dev, y_dev))
+          batch_size=100) #, validation_data=(X_dev, y_dev))
 
 score = model.evaluate(X_test, y_test)
 print("evaluate model..")
