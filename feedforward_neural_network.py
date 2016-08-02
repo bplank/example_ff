@@ -46,7 +46,7 @@ def load_data(trainfile, devfile, testfile):
 
 
     ### convert labels to one-hot
-    label2idx = {label: i for i, label in enumerate(set(train_y))}
+    label2idx = {label: i for i, label in enumerate(set(train_y+dev_y+test_y))}
     num_labels = len(label2idx.keys())
     train_y = np_utils.to_categorical([label2idx[label] for label in train_y], nb_classes=num_labels)
     dev_y = np_utils.to_categorical([label2idx[label] for label in dev_y], nb_classes=num_labels)
