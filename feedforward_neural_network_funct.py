@@ -51,9 +51,9 @@ def load_data(trainfile, devfile, testfile):
     ### convert labels to one-hot
     label2idx = {label: i for i, label in enumerate(set(train_y+dev_y+test_y))}
     num_labels = len(label2idx.keys())
-    train_y = np_utils.to_categorical([label2idx[label] for label in train_y], nb_classes=num_labels)
-    dev_y = np_utils.to_categorical([label2idx[label] for label in dev_y], nb_classes=num_labels)
-    test_y = np_utils.to_categorical([label2idx[label] for label in test_y], nb_classes=num_labels)
+    train_y = np_utils.to_categorical([label2idx[label] for label in train_y], num_classes=num_labels)
+    dev_y = np_utils.to_categorical([label2idx[label] for label in dev_y], num_classes=num_labels)
+    test_y = np_utils.to_categorical([label2idx[label] for label in test_y], num_classes=num_labels)
 
     return X_train, train_y, X_dev, dev_y, X_test, test_y, word2idx, label2idx
 
@@ -105,7 +105,7 @@ print("train model..")
 model.compile(loss='categorical_crossentropy', optimizer="sgd", metrics=['accuracy'])
 
 model.fit(X_train, y_train,
-          nb_epoch=args.iters,
+          epochs=args.iters,
           batch_size=100) #, validation_data=(X_dev, y_dev))
 
 score = model.evaluate(X_test, y_test)
