@@ -2,13 +2,17 @@ __author__ = "bplank"
 
 """
 A first version of a simple feedforward NN for animacy classification
+
+Uses traditional n-hot encoding input of |V| size
 """
 import numpy as np
 np.random.seed(113) #set seed before any keras import
 import argparse
 from keras.utils import np_utils
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation, Dropout
+from keras.layers import Dense, Activation
+
+from sklearn.metrics import accuracy_score, classification_report
 
 parser = argparse.ArgumentParser()
 parser.add_argument('train', help="animacy data training file")
@@ -18,7 +22,11 @@ parser.add_argument('--iters', help="epochs (iterations)", type=int, default=10)
 args = parser.parse_args()
 
 
-def get_index(word, index_from, word2idx, freeze=False):
+def get_index(word, word2idx, freeze=False):
+    """
+    map words to indices
+    keep special OOV at position 0
+    """
     if word in word2idx:
         return word2idx[word]
     else:
@@ -28,6 +36,16 @@ def get_index(word, index_from, word2idx, freeze=False):
         else:
             return word2idx["_UNK"]
 
+
+def convert_to_n_hot(X, vocab_size):
+    out = []
+    for instance in X:
+        n_hot = np.zeros(vocab_size)
+        for w_idx in instance:
+            n_hot[w_idx] = 1
+        out.append(n_hot)
+    return np.array(out)
+
 def load_data(trainfile, devfile, testfile):
     ### load data
     train_sents, train_y = load_animacy_sentences_and_labels(trainfile)
@@ -36,17 +54,20 @@ def load_data(trainfile, devfile, testfile):
 
     ### create mapping word to indices
     word2idx = {"_UNK": 0}  # reserve 0 for OOV
-    index_from = len(word2idx)
 
     ### convert training etc data to indices
-    X_train = [[get_index(w, index_from,word2idx) for w in x] for x in train_sents]
+    X_train = [[get_index(w,word2idx) for w in x] for x in train_sents]
     freeze=True
-    X_dev = [[get_index(w, index_from,word2idx,freeze) for w in x] for x in dev_sents]
-    X_test = [[get_index(w, index_from,word2idx,freeze) for w in x] for x in test_sents]
+    X_dev = [[get_index(w,word2idx,freeze) for w in x] for x in dev_sents]
+    X_test = [[get_index(w,word2idx,freeze) for w in x] for x in test_sents]
 
+    vocab_size = len(word2idx)
+    X_train = convert_to_n_hot(X_train, vocab_size)
+    X_dev = convert_to_n_hot(X_dev, vocab_size)
+    X_test = convert_to_n_hot(X_test, vocab_size)
 
     ### convert labels to one-hot
-    label2idx = {label: i for i, label in enumerate(set(train_y+dev_y+test_y))}
+    label2idx = {label: i for i, label in enumerate(set(train_y+dev_y))}
     num_labels = len(label2idx.keys())
     train_y = np_utils.to_categorical([label2idx[label] for label in train_y], num_classes=num_labels)
     dev_y = np_utils.to_categorical([label2idx[label] for label in dev_y], num_classes=num_labels)
@@ -75,22 +96,40 @@ assert(len(X_dev)==len(y_dev))
 vocabulary_size=len(word2idx.keys())
 num_labels = len(tag2idx)
 input_size = len(X_train[0])
-
+print(input_size)
 print("build model")
+print("vocab:", vocabulary_size)
 model = Sequential()
-model.add(Dense(num_labels, input_dim=input_size, init='uniform'))
-model.add(Activation('tanh'))
-model.add(Dense(num_labels))
+### simplest neural network with sparse input
+### Add your code here, create a simple feedforward neural network
+model.add(Dense(64, input_dim=vocabulary_size))
+model.add(Activation("tanh"))
+model.add(Dense(units=num_labels))
 model.add(Activation('softmax'))
 
+## end your code
 print("train model..")
-model.compile(loss='categorical_crossentropy', optimizer="sgd", metrics=['accuracy'])
+model.compile(loss='categorical_crossentropy', optimizer="adam", metrics=['accuracy'])
 
 model.fit(X_train, y_train,
           epochs=args.iters,
-          batch_size=100) #, validation_data=(X_dev, y_dev))
+          batch_size=100, validation_data=(X_dev, y_dev))
+
 
 score = model.evaluate(X_test, y_test)
 print("evaluate model..")
 score, acc = model.evaluate(X_test, y_test)
-print('Test accuracy:', acc)
+print("Test accuracy:", acc)
+
+## lets get predictions (evaluate just gets us the scores)
+
+## Q2: get the actual predictions (argmax per class) and use classification report from sklearn
+probs = model.predict(X_test)
+y_predicted = []
+idx2tag  = {v: k for k,v in tag2idx.items()} #invert mapping
+y_predicted = [idx2tag[seq.argmax()] for seq in probs]
+y_test = [idx2tag[int(np.where(vec==1)[0])] for vec in y_test]
+target_names = [key for val, key in sorted([(value,key) for key, value in tag2idx.items()])]
+print(accuracy_score(y_test, y_predicted))
+
+print(classification_report(y_test, y_predicted))
