@@ -21,7 +21,7 @@ parser.add_argument('--iters', help="epochs (iterations)", type=int, default=10)
 args = parser.parse_args()
 
 
-def get_index(word, index_from, word2idx, freeze=False):
+def get_index(word, word2idx, freeze=False):
     if word in word2idx:
         return word2idx[word]
     else:
@@ -39,13 +39,12 @@ def load_data(trainfile, devfile, testfile):
 
     ### create mapping word to indices
     word2idx = {"_UNK": 0}  # reserve 0 for OOV
-    index_from = len(word2idx)
 
     ### convert training etc data to indices
-    X_train = [[get_index(w, index_from,word2idx) for w in x] for x in train_sents]
+    X_train = [[get_index(w,word2idx) for w in x] for x in train_sents]
     freeze=True
-    X_dev = [[get_index(w, index_from,word2idx,freeze) for w in x] for x in dev_sents]
-    X_test = [[get_index(w, index_from,word2idx,freeze) for w in x] for x in test_sents]
+    X_dev = [[get_index(w,word2idx,freeze) for w in x] for x in dev_sents]
+    X_test = [[get_index(w,word2idx,freeze) for w in x] for x in test_sents]
 
 
     ### convert labels to one-hot
@@ -99,7 +98,7 @@ dense = Dense(64, activation='tanh')(flatten)
 main_loss = Dense(num_labels, activation='softmax', name='main_output')(dense)
 
 # the model is specified by connecting input and output
-model = Model(input=[main_input], output=[main_loss])
+model = Model(inputs=[main_input], outputs=[main_loss])
 
 print("train model..")
 model.compile(loss='categorical_crossentropy', optimizer="sgd", metrics=['accuracy'])
