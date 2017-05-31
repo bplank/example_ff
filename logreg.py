@@ -31,14 +31,8 @@ def load_data(trainfile, devfile, testfile):
     X_dev = vectorizer.transform(dev_sents)
     X_test = vectorizer.transform(test_sents)
 
-
-    ### convert labels to one-hot
-    label2idx = {label: i for i, label in enumerate(set(train_y+dev_y+test_y))}
-    train_y = [label2idx[label] for label in train_y]
-    dev_y = [label2idx[label] for label in dev_y]
-    test_y = [label2idx[label] for label in test_y]
-
-    return X_train, train_y, X_dev, dev_y, X_test, test_y, label2idx
+    # in sklearn we can use labels as-is (no conversion needed)
+    return X_train, train_y, X_dev, dev_y, X_test, test_y
 
 def load_animacy_sentences_and_labels(datafile):
     """
@@ -51,7 +45,7 @@ def load_animacy_sentences_and_labels(datafile):
 
 ## read input data
 print("load data..")
-X_train, y_train, X_dev, y_dev, X_test, y_test, tag2idx = load_data(args.train, args.dev, args.test)
+X_train, y_train, X_dev, y_dev, X_test, y_test = load_data(args.train, args.dev, args.test)
 
 print("#train instances: {}\n#test instances: {}\n#dev instances: {}".format(X_train.shape[0],X_test.shape[0], X_dev.shape[0]))
 
@@ -63,5 +57,4 @@ y_predicted = model.predict(X_test)
 print("evaluate model..")
 acc = accuracy_score(y_test, y_predicted)
 print('Test accuracy:', acc)
-target_names = [key for val, key in sorted([(value,key) for key, value in tag2idx.items()])]
-print(classification_report(y_test, y_predicted, target_names=target_names))
+print(classification_report(y_test, y_predicted)) 
