@@ -1,0 +1,2 @@
+#!/bin/bash
+PYTHONHASHSEED=113 python feedforward_neural_network.py data/animacy_data_context_2_padded_shuffle_train.tsv data/animacy_data_context_2_padded_shuffle_dev.tsv data/animacy_data_context_2_padded_shuffle_test.tsv
